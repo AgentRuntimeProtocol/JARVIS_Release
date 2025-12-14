@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jarvis-arp"
+version = "0.1.0a5"
+description = "Meta-package that installs the full JARVIS ARP stack (runtime, model, tool registry)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Agent Runtime Protocol" }]
+dependencies = [
+  "jarvis-runtime==0.1.0a5",
+  "jarvis-model==0.1.0a5",
+  "jarvis-tool-registry==0.1.0a5",
+]
+
+[project.urls]
+Repository = "https://github.com/AgentRuntimeProtocol/Arp_Release"
+Issues = "https://github.com/AgentRuntimeProtocol/Arp_Release/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]
