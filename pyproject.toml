@@ -3,22 +3,30 @@ requires = ["setuptools>=70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jarvis-arp"
-version = "0.1.0a5"
-description = "Meta-package that installs the full JARVIS ARP stack (runtime, model, tool registry)."
+name = "arp-jarvis"
+version = "0.1.0"
+description = "Meta-package that installs a pinned, compatible JARVIS OSS stack (daemon, runtime, tool registry, standard)."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Agent Runtime Protocol" }]
 dependencies = [
-  "jarvis-runtime==0.1.0a5",
-  "jarvis-model==0.1.0a5",
-  "jarvis-tool-registry==0.1.0a5",
+  "arp-standard-py==0.1.0",
+  "arp-jarvis-daemon==0.1.0",
+  "arp-jarvis-runtime==0.1.0",
+  "arp-jarvis-tool-registry==0.1.0",
 ]
 
 [project.urls]
-Repository = "https://github.com/AgentRuntimeProtocol/Arp_Release"
-Issues = "https://github.com/AgentRuntimeProtocol/Arp_Release/issues"
+Repository = "https://github.com/AgentRuntimeProtocol/JARVIS_Release"
+Issues = "https://github.com/AgentRuntimeProtocol/JARVIS_Release/issues"
+
+[project.optional-dependencies]
+openai = ["arp-jarvis-runtime[openai]==0.1.0"]
+
+[project.scripts]
+arp-jarvis = "arp_jarvis.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
