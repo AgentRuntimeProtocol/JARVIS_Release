@@ -169,7 +169,7 @@ Here's an diagram of its architecture, closely aligning with the standard:
 <div align="center">
   <picture>
     <source srcset="./images/ARP_Ecosystem_Diagram_Basic.png">
-    <img alt="ARP_Basic_Diagram" src="./images/ARP_Ecosystem_Diagram_Basic.png" width="50%">
+    <img alt="ARP_Basic_Diagram" src="./images/ARP_Ecosystem_Diagram_Basic.png" width="80%">
   </picture>
 </div>
 
