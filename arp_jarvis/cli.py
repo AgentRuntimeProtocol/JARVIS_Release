@@ -87,11 +87,9 @@ def _call_cli(func, argv: list[str]) -> int:
     try:
         return int(func(argv))
     except SystemExit as exc:
-        code = exc.code
-        if code is None:
+        if (code := exc.code) is None:
             return 0
         if isinstance(code, int):
             return code
         print(str(code), file=sys.stderr)
         return 1
-
