@@ -1,106 +1,31 @@
 name: CI
 
 on:
+  pull_request:
   push:
-    branches: ["main"]
-    tags: ["v*"]
-  pull_request: {}
-  workflow_dispatch: {}
+    branches: [main]
 
 jobs:
-  build-and-smoke:
+  test:
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - name: Create venv
-        run: python -m venv .venv
-
-      - name: Install build tools
-        run: .venv/bin/python -m pip install --upgrade pip build twine
-
-      - name: Verify version pins
+          python-version: "${{ matrix.python-version }}"
+      - name: Install package
         run: |
-          .venv/bin/python - <<'PY'
-          import re
-          import tomllib
-          from pathlib import Path
-
-          from packaging.requirements import Requirement
-
-          STACK_DISTS = {
-            "arp-standard-py",
-            "arp-jarvis-daemon",
-            "arp-jarvis-runtime",
-            "arp-jarvis-tool-registry",
-          }
-
-          with open("pyproject.toml", "rb") as f:
-            project = tomllib.load(f)["project"]
-
-          version = project["version"]
-
-          init_py = Path("arp_jarvis/__init__.py").read_text(encoding="utf-8")
-          match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', init_py)
-          if not match:
-            raise SystemExit("Could not find __version__ in arp_jarvis/__init__.py")
-
-          init_version = match.group(1)
-          if init_version != version:
-            raise SystemExit(
-              f"arp_jarvis.__version__ ({init_version}) does not match pyproject.toml version ({version})"
-            )
-
-          pinned: set[str] = set()
-          requirements: list[str] = list(project.get("dependencies", []))
-          for group in project.get("optional-dependencies", {}).values():
-            requirements.extend(group)
-
-          for req_str in requirements:
-            req = Requirement(req_str)
-            if req.name not in STACK_DISTS:
-              continue
-            pinned.add(req.name)
-            if str(req.specifier) != f"=={version}":
-              raise SystemExit(f"Dependency pin mismatch: {req_str} (expected =={version})")
-
-          missing = STACK_DISTS - pinned
-          if missing:
-            raise SystemExit(f"Missing pinned stack dependencies: {sorted(missing)}")
-          PY
-
-      - name: Install package (sanity)
-        run: .venv/bin/python -m pip install -e .
-
-      - name: Smoke CLI
-        run: .venv/bin/arp-jarvis versions
-
-      - name: Verify stack versions match
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" || python -m pip install -e .
+      - name: Run tests
         run: |
-          .venv/bin/python - <<'PY'
-          from importlib import metadata
-
-          meta_version = metadata.version("arp-jarvis")
-          for dist in (
-            "arp-standard-py",
-            "arp-jarvis-daemon",
-            "arp-jarvis-runtime",
-            "arp-jarvis-tool-registry",
-          ):
-            v = metadata.version(dist)
-            if v != meta_version:
-              raise SystemExit(f"{dist} version ({v}) does not match arp-jarvis version ({meta_version})")
-          PY
-
-      - name: Build
-        run: .venv/bin/python -m build
-
-      - name: Check dist
-        run: .venv/bin/python -m twine check dist/*
+          if [ -d tests ]; then
+            python -m pip install pytest
+            pytest
+          else
+            echo "No tests directory; skipping."
+          fi

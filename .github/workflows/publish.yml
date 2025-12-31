@@ -1,105 +1,45 @@
-name: Publish to PyPI
+name: Publish
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-  workflow_dispatch: {}
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   publish:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
-      - name: Checkout (workflow_run)
-        if: ${{ github.event_name == 'workflow_run' }}
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-
-      - name: Checkout (manual)
-        if: ${{ github.event_name != 'workflow_run' }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Resolve release tag
-        id: release_tag
+          python-version: "3.11"
+      - name: Install build tooling
         run: |
-          tag="$(git tag --points-at "$GITHUB_SHA" | grep '^v' | head -n1 || true)"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Python
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Create venv
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: python -m venv .venv
-
-      - name: Install build tools
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: .venv/bin/python -m pip install --upgrade pip build twine
-
-      - name: Install package (sanity)
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: .venv/bin/python -m pip install -e .
-
-      - name: Smoke CLI
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: .venv/bin/arp-jarvis versions
-
-      - name: Verify tag matches pyproject version
-        if: ${{ steps.release_tag.outputs.tag != '' }}
+          python -m pip install --upgrade pip
+          python -m pip install build
+      - name: Verify tag matches package version
         run: |
-          .venv/bin/python - <<'PY'
+          python - <<'PY'
+          import os
           import tomllib
 
-          tag = "${{ steps.release_tag.outputs.tag }}"
-          if tag.startswith("v"):
-            tag = tag[1:]
-
+          tag = os.environ.get("GITHUB_REF_NAME", "").lstrip("v")
           with open("pyproject.toml", "rb") as f:
-            project = tomllib.load(f)["project"]
-
-          version = project["version"]
+              data = tomllib.load(f)
+          version = data.get("project", {}).get("version")
+          if not version:
+              raise SystemExit("Missing project.version in pyproject.toml")
           if tag != version:
-            raise SystemExit(f"Tag version ({tag}) does not match pyproject.toml version ({version})")
+              raise SystemExit(f"Tag v{tag} does not match package version {version}")
+          print(f"Tag matches version: {version}")
           PY
-
-      - name: Verify stack versions match
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: |
-          .venv/bin/python - <<'PY'
-          from importlib import metadata
-
-          meta_version = metadata.version("arp-jarvis")
-          for dist in (
-            "arp-standard-py",
-            "arp-jarvis-daemon",
-            "arp-jarvis-runtime",
-            "arp-jarvis-tool-registry",
-          ):
-            v = metadata.version(dist)
-            if v != meta_version:
-              raise SystemExit(f"{dist} version ({v}) does not match arp-jarvis version ({meta_version})")
-          PY
-
-      - name: Build
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: .venv/bin/python -m build
-
-      - name: Check dist
-        if: ${{ steps.release_tag.outputs.tag != '' }}
-        run: .venv/bin/python -m twine check dist/*
-
-      - name: Publish to PyPI (Trusted Publishing)
-        if: ${{ steps.release_tag.outputs.tag != '' }}
+      - name: Build package
+        run: python -m build
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

@@ -4,26 +4,30 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arp-jarvis"
-version = "0.1.0"
-description = "Meta-package that installs a pinned, compatible JARVIS OSS stack (daemon, runtime, tool registry, standard)."
+version = "0.3.3"
+description = "Stack distribution that pins compatible JARVIS components."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Agent Runtime Protocol" }]
 dependencies = [
-  "arp-standard-py==0.1.0",
-  "arp-jarvis-daemon==0.1.0",
-  "arp-jarvis-runtime==0.1.0",
-  "arp-jarvis-tool-registry==0.1.0",
+  "arp-jarvis-rungateway==0.3.3",
+  "arp-jarvis-run-coordinator==0.3.3",
+  "arp-jarvis-atomic-executor==0.3.3",
+  "arp-jarvis-composite-executor==0.3.3",
+  "arp-jarvis-node-registry==0.3.3",
+  "arp-jarvis-selection-service==0.3.3",
+  "arp-jarvis-pdp==0.3.3",
+  "arp-jarvis-runstore==0.3.3",
+  "arp-jarvis-eventstream==0.3.3",
+  "arp-jarvis-artifactstore==0.3.3",
+  "arp-jarvis-atomic-nodes==0.3.3",
 ]
 
 [project.urls]
 Repository = "https://github.com/AgentRuntimeProtocol/JARVIS_Release"
 Issues = "https://github.com/AgentRuntimeProtocol/JARVIS_Release/issues"
-
-[project.optional-dependencies]
-openai = ["arp-jarvis-runtime[openai]==0.1.0"]
 
 [project.scripts]
 arp-jarvis = "arp_jarvis.cli:main"

@@ -1,0 +1,174 @@
+version: "3.9"
+
+x-env-files: &env-files
+  - ./.env.local
+  - ./profiles/${STACK_PROFILE}.env
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HTTP_PORT: "8080"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "${KEYCLOAK_HOST_PORT}:8080"
+    volumes:
+      - ./keycloak/realm-arp-dev.json:/opt/keycloak/data/import/realm-arp-dev.json:ro
+      - keycloak-data:/opt/keycloak/data
+
+  run-gateway:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-rungateway:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-run-gateway
+      ARP_AUTH_CLIENT_ID: arp-run-gateway
+      ARP_AUTH_CLIENT_SECRET: ${ARP_RUN_GATEWAY_CLIENT_SECRET}
+      JARVIS_RUN_COORDINATOR_URL: http://run-coordinator:8081
+      JARVIS_RUN_COORDINATOR_AUDIENCE: arp-run-coordinator
+    ports:
+      - "${RUN_GATEWAY_HOST_PORT}:8080"
+    depends_on:
+      - keycloak
+      - run-coordinator
+
+  run-coordinator:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-run-coordinator:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-run-coordinator
+      ARP_AUTH_CLIENT_ID: arp-run-coordinator
+      ARP_AUTH_CLIENT_SECRET: ${ARP_RUN_COORDINATOR_CLIENT_SECRET}
+      JARVIS_RUN_STORE_URL: http://run-store:8091
+      JARVIS_EVENT_STREAM_URL: http://event-stream:8093
+      JARVIS_ARTIFACT_STORE_URL: http://artifact-store:8092
+      JARVIS_RUN_STORE_AUDIENCE: arp-jarvis-runstore
+      JARVIS_EVENT_STREAM_AUDIENCE: arp-jarvis-eventstream
+      JARVIS_ARTIFACT_STORE_AUDIENCE: arp-jarvis-artifactstore
+      JARVIS_ATOMIC_EXECUTOR_URL: http://atomic-executor:8082
+      JARVIS_COMPOSITE_EXECUTOR_URL: http://composite-executor:8083
+      JARVIS_NODE_REGISTRY_URL: http://node-registry:8084
+      JARVIS_SELECTION_URL: http://selection-service:8085
+      JARVIS_PDP_URL: http://pdp:8086
+      JARVIS_ATOMIC_EXECUTOR_AUDIENCE: arp-atomic-executor
+      JARVIS_COMPOSITE_EXECUTOR_AUDIENCE: arp-composite-executor
+      JARVIS_NODE_REGISTRY_AUDIENCE: arp-node-registry
+      JARVIS_SELECTION_AUDIENCE: arp-selection
+      JARVIS_PDP_AUDIENCE: arp-pdp
+      JARVIS_RUN_COORDINATOR_URL: http://run-coordinator:8081
+      JARVIS_POLICY_PROFILE: dev-allow
+    ports:
+      - "${RUN_COORDINATOR_HOST_PORT:-8082}:8081"
+    depends_on:
+      - keycloak
+      - run-store
+      - event-stream
+      - artifact-store
+      - atomic-executor
+      - composite-executor
+      - node-registry
+      - selection-service
+      - pdp
+
+  atomic-executor:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-atomic-executor:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-atomic-executor
+    depends_on:
+      - keycloak
+
+  composite-executor:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-composite-executor:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-composite-executor
+      ARP_AUTH_CLIENT_ID: arp-composite-executor
+      ARP_AUTH_CLIENT_SECRET: ${ARP_COMPOSITE_EXECUTOR_CLIENT_SECRET}
+      JARVIS_SELECTION_URL: http://selection-service:8085
+      JARVIS_NODE_REGISTRY_URL: http://node-registry:8084
+      JARVIS_SELECTION_AUDIENCE: arp-selection
+      JARVIS_NODE_REGISTRY_AUDIENCE: arp-node-registry
+    depends_on:
+      - keycloak
+      - selection-service
+      - node-registry
+
+  node-registry:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-node-registry:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-node-registry
+      ARP_AUTH_MODE: optional
+      JARVIS_NODE_REGISTRY_DB_URL: sqlite:////data/jarvis_node_registry.sqlite
+      JARVIS_NODE_REGISTRY_SEED: "true"
+    volumes:
+      - node-registry-data:/data
+    depends_on:
+      - keycloak
+
+  selection-service:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-selection-service:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-selection
+      JARVIS_NODE_REGISTRY_URL: http://node-registry:8084
+    depends_on:
+      - keycloak
+      - node-registry
+
+  pdp:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-pdp:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-pdp
+      ARP_AUTH_CLIENT_ID: arp-pdp
+      ARP_AUTH_CLIENT_SECRET: ${ARP_PDP_CLIENT_SECRET}
+      JARVIS_NODE_REGISTRY_URL: http://node-registry:8084
+      JARVIS_NODE_REGISTRY_AUDIENCE: arp-node-registry
+      JARVIS_POLICY_PROFILE: dev-allow
+    depends_on:
+      - keycloak
+      - node-registry
+
+  run-store:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-runstore:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-jarvis-runstore
+      JARVIS_RUN_STORE_DB_URL: sqlite:////data/jarvis_run_store.sqlite
+    volumes:
+      - run-store-data:/data
+    depends_on:
+      - keycloak
+
+  event-stream:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-eventstream:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-jarvis-eventstream
+      JARVIS_EVENT_STORE_DB_URL: sqlite:////data/jarvis_event_store.sqlite
+    volumes:
+      - event-stream-data:/data
+    depends_on:
+      - keycloak
+
+  artifact-store:
+    image: ghcr.io/agentruntimeprotocol/arp-jarvis-artifactstore:${STACK_VERSION}
+    env_file: *env-files
+    environment:
+      ARP_AUTH_SERVICE_ID: arp-jarvis-artifactstore
+      JARVIS_ARTIFACT_DIR: /data
+    volumes:
+      - artifact-store-data:/data
+    depends_on:
+      - keycloak
+
+volumes:
+  keycloak-data:
+  run-store-data:
+  event-stream-data:
+  artifact-store-data:
+  node-registry-data:
