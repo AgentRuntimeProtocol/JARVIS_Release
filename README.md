@@ -38,7 +38,7 @@ Local dev STS (default profile):
 
 Decision: **Mode B / per-service GHCR images**.
 Each JARVIS component repo publishes a GHCR image on `vX.Y.Z` tags. This repo consumes those images
-via Docker Compose and pins the references in `stack.lock.json` (digests can be added for stronger reproducibility).
+via Docker Compose and pins the references in `stack.lock.json`.
 
 ## Quickstart (dev-secure-keycloak)
 
