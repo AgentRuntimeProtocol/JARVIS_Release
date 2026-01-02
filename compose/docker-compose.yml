@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-env-files: &env-files
   - ./.env.local
   - ./profiles/${STACK_PROFILE}.env
