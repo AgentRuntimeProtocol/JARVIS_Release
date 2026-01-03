@@ -1,111 +1,111 @@
 {
-  "stack_version": "0.3.5",
+  "stack_version": "0.3.7",
   "components": {
     "run_gateway": {
       "repo": "JARVIS_RunGateway",
       "pypi": {
         "name": "arp-jarvis-rungateway",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-rungateway:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-rungateway:0.3.7"
       }
     },
     "run_coordinator": {
       "repo": "JARVIS_RunCoordinator",
       "pypi": {
         "name": "arp-jarvis-run-coordinator",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-run-coordinator:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-run-coordinator:0.3.7"
       }
     },
     "atomic_executor": {
       "repo": "JARVIS_AtomicExecutor",
       "pypi": {
         "name": "arp-jarvis-atomic-executor",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-atomic-executor:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-atomic-executor:0.3.7"
       }
     },
     "composite_executor": {
       "repo": "JARVIS_CompositeExecutor",
       "pypi": {
         "name": "arp-jarvis-composite-executor",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-composite-executor:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-composite-executor:0.3.7"
       }
     },
     "node_registry": {
       "repo": "JARVIS_NodeRegistry",
       "pypi": {
         "name": "arp-jarvis-node-registry",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-node-registry:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-node-registry:0.3.7"
       }
     },
     "selection_service": {
       "repo": "JARVIS_SelectionService",
       "pypi": {
         "name": "arp-jarvis-selection-service",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-selection-service:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-selection-service:0.3.7"
       }
     },
     "pdp": {
       "repo": "JARVIS_PDP",
       "pypi": {
         "name": "arp-jarvis-pdp",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-pdp:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-pdp:0.3.7"
       }
     },
     "run_store": {
       "repo": "JARVIS_RunStore",
       "pypi": {
         "name": "arp-jarvis-runstore",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-runstore:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-runstore:0.3.7"
       }
     },
     "event_stream": {
       "repo": "JARVIS_EventStream",
       "pypi": {
         "name": "arp-jarvis-eventstream",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-eventstream:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-eventstream:0.3.7"
       }
     },
     "artifact_store": {
       "repo": "JARVIS_ArtifactStore",
       "pypi": {
         "name": "arp-jarvis-artifactstore",
-        "version": "0.3.5"
+        "version": "0.3.7"
       },
       "image": {
-        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-artifactstore:0.3.5"
+        "ref": "ghcr.io/agentruntimeprotocol/arp-jarvis-artifactstore:0.3.7"
       }
     }
   },
   "node_packs": {
     "first_party": {
       "name": "arp-jarvis-atomic-nodes",
-      "version": "0.3.5"
+      "version": "0.3.7"
     }
   },
   "helpers": {
