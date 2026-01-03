@@ -125,6 +125,23 @@ arp-jarvis versions
 
 arp-jarvis stack pull
 arp-jarvis stack up -d
-arp-jarvis doctor
+
+echo "Waiting for stack to be ready..."
+ready=0
+for ((i=1; i<=30; i++)); do
+  if arp-jarvis --json doctor >/dev/null 2>&1; then
+    ready=1
+    break
+  fi
+  sleep 2
+done
+
+if [[ "$ready" -eq 1 ]]; then
+  arp-jarvis doctor
+else
+  echo "Stack did not become ready in time."
+  arp-jarvis doctor || true
+  exit 1
+fi
 
 echo "Done. Stack is running in dev-insecure mode."

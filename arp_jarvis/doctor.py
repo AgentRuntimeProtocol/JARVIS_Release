@@ -41,7 +41,7 @@ def run_doctor(config: ResolvedConfig) -> dict[str, Any]:
 
 
 def _compose_status(config: ResolvedConfig) -> dict[str, Any]:
-    cmd = compose_base_command(config) + ["ps", "--format", "json"]
+    cmd = compose_base_command(config) + ["ps", "--all", "--format", "json"]
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         return {

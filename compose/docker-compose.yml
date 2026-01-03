@@ -11,11 +11,18 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_PORT: "8080"
       KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
     ports:
       - "${KEYCLOAK_HOST_PORT}:8080"
     volumes:
       - ./keycloak/realm-arp-dev.json:/opt/keycloak/data/import/realm-arp-dev.json:ro
       - keycloak-data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health/ready || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+      start_period: 20s
 
   run-gateway:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-rungateway:${STACK_VERSION}
@@ -29,8 +36,10 @@ services:
     ports:
       - "${RUN_GATEWAY_HOST_PORT}:8080"
     depends_on:
-      - keycloak
-      - run-coordinator
+      keycloak:
+        condition: service_healthy
+      run-coordinator:
+        condition: service_started
 
   run-coordinator:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-run-coordinator:${STACK_VERSION}
@@ -60,15 +69,24 @@ services:
     ports:
       - "${RUN_COORDINATOR_HOST_PORT:-8082}:8081"
     depends_on:
-      - keycloak
-      - run-store
-      - event-stream
-      - artifact-store
-      - atomic-executor
-      - composite-executor
-      - node-registry
-      - selection-service
-      - pdp
+      keycloak:
+        condition: service_healthy
+      run-store:
+        condition: service_started
+      event-stream:
+        condition: service_started
+      artifact-store:
+        condition: service_started
+      atomic-executor:
+        condition: service_started
+      composite-executor:
+        condition: service_started
+      node-registry:
+        condition: service_started
+      selection-service:
+        condition: service_started
+      pdp:
+        condition: service_started
 
   atomic-executor:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-atomic-executor:${STACK_VERSION}
@@ -76,7 +94,8 @@ services:
     environment:
       ARP_AUTH_SERVICE_ID: arp-atomic-executor
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 
   composite-executor:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-composite-executor:${STACK_VERSION}
@@ -90,22 +109,26 @@ services:
       JARVIS_SELECTION_AUDIENCE: arp-selection
       JARVIS_NODE_REGISTRY_AUDIENCE: arp-node-registry
     depends_on:
-      - keycloak
-      - selection-service
-      - node-registry
+      keycloak:
+        condition: service_healthy
+      selection-service:
+        condition: service_started
+      node-registry:
+        condition: service_started
 
   node-registry:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-node-registry:${STACK_VERSION}
     env_file: *env-files
     environment:
       ARP_AUTH_SERVICE_ID: arp-node-registry
-      ARP_AUTH_MODE: optional
       JARVIS_NODE_REGISTRY_DB_URL: sqlite:////data/jarvis_node_registry.sqlite
       JARVIS_NODE_REGISTRY_SEED: "true"
     volumes:
       - node-registry-data:/data
+    restart: unless-stopped
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 
   selection-service:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-selection-service:${STACK_VERSION}
@@ -114,8 +137,10 @@ services:
       ARP_AUTH_SERVICE_ID: arp-selection
       JARVIS_NODE_REGISTRY_URL: http://node-registry:8084
     depends_on:
-      - keycloak
-      - node-registry
+      keycloak:
+        condition: service_healthy
+      node-registry:
+        condition: service_started
 
   pdp:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-pdp:${STACK_VERSION}
@@ -128,8 +153,10 @@ services:
       JARVIS_NODE_REGISTRY_AUDIENCE: arp-node-registry
       JARVIS_POLICY_PROFILE: dev-allow
     depends_on:
-      - keycloak
-      - node-registry
+      keycloak:
+        condition: service_healthy
+      node-registry:
+        condition: service_started
 
   run-store:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-runstore:${STACK_VERSION}
@@ -140,7 +167,8 @@ services:
     volumes:
       - run-store-data:/data
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 
   event-stream:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-eventstream:${STACK_VERSION}
@@ -151,7 +179,8 @@ services:
     volumes:
       - event-stream-data:/data
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 
   artifact-store:
     image: ghcr.io/agentruntimeprotocol/arp-jarvis-artifactstore:${STACK_VERSION}
@@ -162,7 +191,8 @@ services:
     volumes:
       - artifact-store-data:/data
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
 
 volumes:
   keycloak-data:
