@@ -67,7 +67,14 @@ def main(argv: list[str] | None = None) -> int:
 
     stack = sub.add_parser("stack", help="Manage the local Docker Compose stack")
     stack_sub = stack.add_subparsers(dest="stack_cmd", required=True)
-    stack_sub.add_parser("up").add_argument("args", nargs=argparse.REMAINDER)
+    stack_up = stack_sub.add_parser("up", help="docker compose up")
+    stack_up.add_argument(
+        "-d",
+        "--detach",
+        action="store_true",
+        help="Run in background (docker compose up -d)",
+    )
+    stack_up.add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("down").add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("pull").add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("ps").add_argument("args", nargs=argparse.REMAINDER)
@@ -194,7 +201,13 @@ def main(argv: list[str] | None = None) -> int:
         return _emit_error(output, "config_error", str(exc))
 
     if args.cmd == "stack":
-        return _cmd_stack(config, args.stack_cmd, args.args, print_command=args.print_command)
+        return _cmd_stack(
+            config,
+            args.stack_cmd,
+            args.args,
+            detach=getattr(args, "detach", False),
+            print_command=args.print_command,
+        )
 
     if args.cmd == "doctor":
         return _cmd_doctor(config, output)
@@ -272,9 +285,20 @@ def _dispatch_passthrough(cmd: str, argv: list[str]) -> int:
     raise RuntimeError(f"Unknown pass-through command: {cmd}")
 
 
-def _cmd_stack(config: ResolvedConfig, stack_cmd: str, args: list[str], *, print_command: bool) -> int:
+def _cmd_stack(
+    config: ResolvedConfig,
+    stack_cmd: str,
+    args: list[str],
+    *,
+    detach: bool,
+    print_command: bool,
+) -> int:
     raw_args = _strip_leading_double_dash(args)
-    return run_compose(config, [stack_cmd] + raw_args, print_command=print_command)
+    compose_args = [stack_cmd]
+    if stack_cmd == "up" and detach and "-d" not in raw_args and "--detach" not in raw_args:
+        compose_args.append("-d")
+    compose_args.extend(raw_args)
+    return run_compose(config, compose_args, print_command=print_command)
 
 
 def _cmd_doctor(config: ResolvedConfig, output: str) -> int:
