@@ -12,17 +12,17 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Agent Runtime Protocol" }]
 dependencies = [
-  "arp-jarvis-rungateway==0.3.3",
-  "arp-jarvis-run-coordinator==0.3.3",
-  "arp-jarvis-atomic-executor==0.3.3",
-  "arp-jarvis-composite-executor==0.3.3",
-  "arp-jarvis-node-registry==0.3.3",
-  "arp-jarvis-selection-service==0.3.3",
-  "arp-jarvis-pdp==0.3.3",
-  "arp-jarvis-runstore==0.3.3",
-  "arp-jarvis-eventstream==0.3.3",
-  "arp-jarvis-artifactstore==0.3.3",
-  "arp-jarvis-atomic-nodes==0.3.3",
+  "arp-jarvis-rungateway==0.3.5",
+  "arp-jarvis-run-coordinator==0.3.5",
+  "arp-jarvis-atomic-executor==0.3.5",
+  "arp-jarvis-composite-executor==0.3.5",
+  "arp-jarvis-node-registry==0.3.5",
+  "arp-jarvis-selection-service==0.3.5",
+  "arp-jarvis-pdp==0.3.5",
+  "arp-jarvis-runstore==0.3.5",
+  "arp-jarvis-eventstream==0.3.5",
+  "arp-jarvis-artifactstore==0.3.5",
+  "arp-jarvis-atomic-nodes==0.3.5",
 ]
 
 [project.urls]

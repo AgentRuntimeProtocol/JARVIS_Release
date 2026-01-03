@@ -11,12 +11,12 @@ class CliStackTests(unittest.TestCase):
     def _write_stack(self, root: Path, profile: str) -> None:
         (root / "compose" / "profiles").mkdir(parents=True, exist_ok=True)
         (root / "compose" / "docker-compose.yml").write_text("services: {}", encoding="utf-8")
-        (root / "stack.lock.json").write_text(json.dumps({"stack_version": "0.3.3"}), encoding="utf-8")
+        (root / "stack.lock.json").write_text(json.dumps({"stack_version": "0.3.5"}), encoding="utf-8")
         (root / "compose" / ".env.local").write_text(
             "\n".join(
                 [
                     f"STACK_PROFILE={profile}",
-                    "STACK_VERSION=0.3.3",
+                    "STACK_VERSION=0.3.5",
                     "RUN_GATEWAY_HOST_PORT=18081",
                     "RUN_COORDINATOR_HOST_PORT=18082",
                     "KEYCLOAK_HOST_PORT=18080",
