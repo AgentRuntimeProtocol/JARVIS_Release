@@ -111,6 +111,12 @@ def main(argv: list[str] | None = None) -> int:
     stack_sub.add_parser("pull").add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("ps").add_argument("args", nargs=argparse.REMAINDER)
     stack_logs = stack_sub.add_parser("logs")
+    stack_logs.add_argument(
+        "-f",
+        "--follow",
+        action="store_true",
+        help="Follow log output (docker compose logs -f)",
+    )
     stack_logs.add_argument("args", nargs=argparse.REMAINDER)
     stack_exec = stack_sub.add_parser("exec")
     stack_exec.add_argument("args", nargs=argparse.REMAINDER)
@@ -239,6 +245,7 @@ def main(argv: list[str] | None = None) -> int:
             args.stack_cmd,
             args.args,
             detach=getattr(args, "detach", False),
+            follow=getattr(args, "follow", False),
             print_command=args.print_command,
         )
 
@@ -324,12 +331,15 @@ def _cmd_stack(
     args: list[str],
     *,
     detach: bool,
+    follow: bool,
     print_command: bool,
 ) -> int:
     raw_args = _strip_leading_double_dash(args)
     compose_args = [stack_cmd]
     if stack_cmd == "up" and detach and "-d" not in raw_args and "--detach" not in raw_args:
         compose_args.append("-d")
+    if stack_cmd == "logs" and follow and "-f" not in raw_args and "--follow" not in raw_args:
+        compose_args.append("-f")
     compose_args.extend(raw_args)
     return run_compose(config, compose_args, print_command=print_command)
 
