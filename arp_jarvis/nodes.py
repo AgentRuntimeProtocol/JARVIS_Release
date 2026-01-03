@@ -62,15 +62,17 @@ def _exec_node_registry(config: ResolvedConfig, *, path: str, params: dict[str, 
 
 
 _PYTHON_FETCH = (
-    "import json,sys,urllib.request;"
-    "url=sys.argv[1];"
-    "req=urllib.request.Request(url,headers={'Accept':'application/json'});"
+    "import json\n"
+    "import sys\n"
+    "import urllib.request\n"
+    "url = sys.argv[1]\n"
+    "req = urllib.request.Request(url, headers={'Accept': 'application/json'})\n"
     "try:\n"
-    "  with urllib.request.urlopen(req,timeout=5) as resp:\n"
-    "    data=resp.read().decode('utf-8')\n"
-    "  print(data)\n"
+    "    with urllib.request.urlopen(req, timeout=5) as resp:\n"
+    "        data = resp.read().decode('utf-8')\n"
+    "    print(data)\n"
     "except Exception as exc:\n"
-    "  payload={'error':{'code':'request_failed','message':str(exc)},'extensions':None}\n"
-    "  print(json.dumps(payload))\n"
-    "  sys.exit(1)\n"
+    "    payload = {'error': {'code': 'request_failed', 'message': str(exc)}, 'extensions': None}\n"
+    "    print(json.dumps(payload))\n"
+    "    sys.exit(1)\n"
 )

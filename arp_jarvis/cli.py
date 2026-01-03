@@ -109,7 +109,15 @@ def main(argv: list[str] | None = None) -> int:
     stack_up.add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("down").add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("pull").add_argument("args", nargs=argparse.REMAINDER)
-    stack_sub.add_parser("ps").add_argument("args", nargs=argparse.REMAINDER)
+    stack_ps = stack_sub.add_parser("ps")
+    stack_ps.add_argument(
+        "-a",
+        "--all",
+        dest="all_services",
+        action="store_true",
+        help="Show all containers (docker compose ps --all)",
+    )
+    stack_ps.add_argument("args", nargs=argparse.REMAINDER)
     stack_logs = stack_sub.add_parser("logs")
     stack_logs.add_argument(
         "-f",
@@ -246,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
             args.args,
             detach=getattr(args, "detach", False),
             follow=getattr(args, "follow", False),
+            show_all=getattr(args, "all_services", False),
             print_command=args.print_command,
         )
 
@@ -332,6 +341,7 @@ def _cmd_stack(
     *,
     detach: bool,
     follow: bool,
+    show_all: bool,
     print_command: bool,
 ) -> int:
     raw_args = _strip_leading_double_dash(args)
@@ -340,6 +350,8 @@ def _cmd_stack(
         compose_args.append("-d")
     if stack_cmd == "logs" and follow and "-f" not in raw_args and "--follow" not in raw_args:
         compose_args.append("-f")
+    if stack_cmd == "ps" and show_all and "-a" not in raw_args and "--all" not in raw_args:
+        compose_args.append("--all")
     compose_args.extend(raw_args)
     return run_compose(config, compose_args, print_command=print_command)
 

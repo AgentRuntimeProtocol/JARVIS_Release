@@ -60,3 +60,15 @@ class CliStackTests(unittest.TestCase):
                 self.assertEqual(code, 0)
                 run_compose.assert_called_once()
                 self.assertEqual(run_compose.call_args.args[1], ["logs", "-f", "composite-executor"])
+
+    def test_stack_ps_all_flag(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_stack(root, "dev-insecure")
+
+            with patch("arp_jarvis.cli.run_compose") as run_compose:
+                run_compose.return_value = 0
+                code = cli.main(["--stack-root", str(root), "stack", "ps", "--all"])
+                self.assertEqual(code, 0)
+                run_compose.assert_called_once()
+                self.assertEqual(run_compose.call_args.args[1], ["ps", "--all"])
