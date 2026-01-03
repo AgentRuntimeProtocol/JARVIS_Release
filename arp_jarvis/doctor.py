@@ -78,6 +78,9 @@ def _check_http(url: str) -> dict[str, Any]:
         return {"ok": False, "error": f"HTTP {exc.code}: {exc.reason}"}
     except URLError as exc:
         return {"ok": False, "error": f"Request failed: {exc.reason}"}
+    except Exception as exc:
+        detail = f"{exc.__class__.__name__}: {exc}".rstrip(": ")
+        return {"ok": False, "error": f"Request failed: {detail}"}
     return {"ok": True, "body": raw}
 
 
