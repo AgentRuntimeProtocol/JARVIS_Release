@@ -48,6 +48,38 @@ _STACK_DISTS: tuple[str, ...] = (
 DEFAULT_AUDIENCE = "arp-run-gateway"
 
 
+def _normalize_global_flags(argv: list[str]) -> list[str]:
+    if not argv:
+        return argv
+    front: list[str] = []
+    rest: list[str] = []
+    idx = 0
+    while idx < len(argv):
+        arg = argv[idx]
+        if arg == "--":
+            rest.extend(argv[idx:])
+            break
+        if arg == "--json":
+            front.append(arg)
+            idx += 1
+            continue
+        if arg in ("-o", "--output"):
+            if idx + 1 < len(argv):
+                front.extend([arg, argv[idx + 1]])
+                idx += 2
+            else:
+                front.append(arg)
+                idx += 1
+            continue
+        if arg.startswith("--output="):
+            front.append(arg)
+            idx += 1
+            continue
+        rest.append(arg)
+        idx += 1
+    return front + rest
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="arp-jarvis",
@@ -177,7 +209,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     artifact_store.add_argument("args", nargs=argparse.REMAINDER)
 
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    argv_list = list(argv) if argv is not None else sys.argv[1:]
+    args = parser.parse_args(_normalize_global_flags(argv_list))
 
     output = "json" if args.json else args.output
 
