@@ -18,7 +18,11 @@ services:
       - ./keycloak/realm-arp-dev.json:/opt/keycloak/data/import/realm-arp-dev.json:ro
       - keycloak-data:/opt/keycloak/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health/ready || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"200\"'",
+        ]
       interval: 5s
       timeout: 2s
       retries: 30
