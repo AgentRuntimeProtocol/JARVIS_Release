@@ -40,12 +40,28 @@ Decision: **Mode B / per-service GHCR images**.
 Each JARVIS component repo publishes a GHCR image on `vX.Y.Z` tags. This repo consumes those images
 via Docker Compose and pins the references in `stack.lock.json`.
 
-## Quickstart (dev-secure-keycloak)
+## Quickstart (CLI-first, dev-secure-keycloak)
 
-1) Copy the env template and keep the default profile:
+1) Copy the env template:
+
+Default (dev-secure-keycloak):
 
 ```bash
 cp compose/.env.example compose/.env.local
+```
+
+Dev-insecure (no inbound JWT):
+
+```bash
+cp compose/.env.example.insecure compose/.env.local
+```
+
+Optional (dev-insecure, macOS/Linux or WSL) one-command bring-up:
+
+```bash
+bash ./start_dev.sh \
+  --llm-api-key "<your_openai_api_key>" \
+  --llm-chat-model "gpt-4.1-mini"
 ```
 
 2) Configure the LLM (required for Selection Service + Composite Executor):
@@ -54,16 +70,35 @@ cp compose/.env.example compose/.env.local
 - OpenAI is the default profile; `ARP_LLM_PROFILE=openai` is optional.
 - For offline tests, you can opt into `ARP_LLM_PROFILE=dev-mock` (not the default).
 
-3) Bring up the stack:
+3) Install the meta CLI:
 
 ```bash
-docker compose --env-file compose/.env.local -f compose/docker-compose.yml up -d
+python3 -m pip install -e .
+arp-jarvis versions
 ```
 
-4) Health check (Run Gateway):
+This installs the `arp-jarvis` CLI version from your local checkout, while the Docker images remain pinned separately via `STACK_VERSION` in `compose/.env.local` and `stack.lock.json`.
+
+4) Bring up the stack and verify wiring:
 
 ```bash
-curl -s http://localhost:8081/v1/health
+arp-jarvis stack pull
+arp-jarvis stack up -d
+arp-jarvis doctor
+```
+
+5) If using `dev-secure-keycloak` (default), log in once:
+
+```bash
+arp-jarvis auth login
+```
+
+This is a browser/device flow. The CLI never asks for your password directly. For the default local realm, a dev user is pre-seeded; the credentials are only for the Keycloak login page during the browser step.
+
+6) Start a run:
+
+```bash
+arp-jarvis runs start --goal "Generate a UUID, then return it."
 ```
 
 Notes:
@@ -74,6 +109,13 @@ Notes:
 - Node Registry runs with `ARP_AUTH_MODE=optional` to allow Selection Service calls (current Selection
   client does not attach bearer tokens).
 
+### Docker Compose fallback (no CLI)
+
+```bash
+docker compose --env-file compose/.env.local -f compose/docker-compose.yml up -d
+curl -s http://localhost:8081/v1/health
+```
+
 ## Stack profiles
 
 Set `STACK_PROFILE` in `compose/.env.local` to one of:
@@ -81,13 +123,21 @@ Set `STACK_PROFILE` in `compose/.env.local` to one of:
 - `dev-insecure`
 - `enterprise` (template only)
 
-## Meta CLI (optional)
+## Meta CLI (arp-jarvis)
 
-Install locally and inspect pinned component versions:
+Convenience commands for interacting with the running stack:
 
 ```bash
-python3 -m pip install -e .
-arp-jarvis versions
+arp-jarvis doctor
+arp-jarvis auth login
+arp-jarvis nodes list
+arp-jarvis runs start --goal "Generate a UUID, then return it."
+```
+
+Compose wrapper (does not replace `docker compose`):
+
+```bash
+arp-jarvis stack up -d --print-command
 ```
 
 You can also invoke component CLIs via `arp-jarvis`:
