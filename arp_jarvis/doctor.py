@@ -48,10 +48,41 @@ def _compose_status(config: ResolvedConfig) -> dict[str, Any]:
             "ok": False,
             "error": proc.stderr.strip() or "docker compose ps failed",
         }
+    raw = (proc.stdout or "").strip()
+    if not raw:
+        return {"ok": False, "error": "docker compose ps returned no data"}
+    payload: Any | None
     try:
-        payload = json.loads(proc.stdout)
+        payload = json.loads(raw)
     except json.JSONDecodeError:
-        return {"ok": False, "error": "Unable to parse docker compose ps output"}
+        payload = None
+        lines = raw.splitlines()
+        for idx, line in enumerate(lines):
+            if line.lstrip().startswith("["):
+                json_text = "\n".join(lines[idx:])
+                try:
+                    payload = json.loads(json_text)
+                except json.JSONDecodeError:
+                    payload = None
+                break
+        if payload is None:
+            items: list[Any] = []
+            for line in lines:
+                line = line.strip()
+                if not line.startswith("{"):
+                    continue
+                try:
+                    items.append(json.loads(line))
+                except json.JSONDecodeError:
+                    return {"ok": False, "error": "Unable to parse docker compose ps output"}
+            payload = items if items else None
+        if payload is None:
+            return {"ok": False, "error": "Unable to parse docker compose ps output"}
+    if isinstance(payload, dict):
+        if "Service" in payload:
+            payload = [payload]
+        else:
+            return {"ok": False, "error": "Unexpected docker compose ps output"}
     if not isinstance(payload, list):
         return {"ok": False, "error": "Unexpected docker compose ps output"}
     services = {item.get("Service"): item for item in payload if isinstance(item, dict)}
@@ -123,15 +154,17 @@ def _discovery_url(config: ResolvedConfig) -> str:
 
 
 _PYTHON_FETCH = (
-    "import json,sys,urllib.request;"
-    "url=sys.argv[1];"
-    "req=urllib.request.Request(url,headers={'Accept':'application/json'});"
+    "import json\n"
+    "import sys\n"
+    "import urllib.request\n"
+    "url = sys.argv[1]\n"
+    "req = urllib.request.Request(url, headers={'Accept': 'application/json'})\n"
     "try:\n"
-    "  with urllib.request.urlopen(req,timeout=5) as resp:\n"
-    "    data=resp.read().decode('utf-8')\n"
-    "  print(data)\n"
+    "    with urllib.request.urlopen(req, timeout=5) as resp:\n"
+    "        data = resp.read().decode('utf-8')\n"
+    "    print(data)\n"
     "except Exception as exc:\n"
-    "  payload={'error':{'code':'request_failed','message':str(exc)},'extensions':None}\n"
-    "  print(json.dumps(payload))\n"
-    "  sys.exit(1)\n"
+    "    payload = {'error': {'code': 'request_failed', 'message': str(exc)}, 'extensions': None}\n"
+    "    print(json.dumps(payload))\n"
+    "    sys.exit(1)\n"
 )
