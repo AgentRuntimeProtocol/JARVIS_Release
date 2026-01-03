@@ -602,13 +602,12 @@ def _cmd_runs(config: ResolvedConfig, args: argparse.Namespace, output: str) -> 
             if args.include_node_runs or args.include_candidates:
                 root_node_id = run.get("root_node_run_id")
                 if root_node_id:
-                    if bearer:
-                        node_run = get_node_run(
-                            config,
-                            root_node_id,
-                            bearer_token=bearer,
-                        )
-                        payload["root_node_run"] = node_run
+                    node_run = get_node_run(
+                        config,
+                        root_node_id,
+                        bearer_token=bearer,
+                    )
+                    payload["root_node_run"] = node_run
             if args.include_events or args.include_candidates:
                 events = fetch_events(config, args.run_id, bearer_token=bearer)
                 if args.include_events:
