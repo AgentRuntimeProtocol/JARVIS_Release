@@ -11,12 +11,12 @@ class CliStackTests(unittest.TestCase):
     def _write_stack(self, root: Path, profile: str) -> None:
         (root / "compose" / "profiles").mkdir(parents=True, exist_ok=True)
         (root / "compose" / "docker-compose.yml").write_text("services: {}", encoding="utf-8")
-        (root / "stack.lock.json").write_text(json.dumps({"stack_version": "0.3.7"}), encoding="utf-8")
+        (root / "stack.lock.json").write_text(json.dumps({"stack_version": "0.3.8"}), encoding="utf-8")
         (root / "compose" / ".env.local").write_text(
             "\n".join(
                 [
                     f"STACK_PROFILE={profile}",
-                    "STACK_VERSION=0.3.7",
+                    "STACK_VERSION=0.3.8",
                     "RUN_GATEWAY_HOST_PORT=18081",
                     "RUN_COORDINATOR_HOST_PORT=18082",
                     "KEYCLOAK_HOST_PORT=18080",
@@ -48,6 +48,18 @@ class CliStackTests(unittest.TestCase):
                 self.assertEqual(code, 0)
                 run_compose.assert_called_once()
                 self.assertEqual(run_compose.call_args.args[1], ["up", "-d"])
+
+    def test_stack_up_build_flag(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_stack(root, "dev-insecure")
+
+            with patch("arp_jarvis.cli.run_compose") as run_compose:
+                run_compose.return_value = 0
+                code = cli.main(["--stack-root", str(root), "stack", "up", "--build"])
+                self.assertEqual(code, 0)
+                run_compose.assert_called_once()
+                self.assertEqual(run_compose.call_args.args[1], ["up", "--build"])
 
     def test_stack_logs_follow_flag(self) -> None:
         with TemporaryDirectory() as tmpdir:

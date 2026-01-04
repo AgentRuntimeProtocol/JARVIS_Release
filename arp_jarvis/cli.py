@@ -106,6 +106,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Run in background (docker compose up -d)",
     )
+    stack_up.add_argument(
+        "--build",
+        action="store_true",
+        help="Build images before starting (docker compose up --build)",
+    )
     stack_up.add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("down").add_argument("args", nargs=argparse.REMAINDER)
     stack_sub.add_parser("pull").add_argument("args", nargs=argparse.REMAINDER)
@@ -253,6 +258,7 @@ def main(argv: list[str] | None = None) -> int:
             args.stack_cmd,
             args.args,
             detach=getattr(args, "detach", False),
+            build=getattr(args, "build", False),
             follow=getattr(args, "follow", False),
             show_all=getattr(args, "all_services", False),
             print_command=args.print_command,
@@ -340,6 +346,7 @@ def _cmd_stack(
     args: list[str],
     *,
     detach: bool,
+    build: bool,
     follow: bool,
     show_all: bool,
     print_command: bool,
@@ -348,6 +355,8 @@ def _cmd_stack(
     compose_args = [stack_cmd]
     if stack_cmd == "up" and detach and "-d" not in raw_args and "--detach" not in raw_args:
         compose_args.append("-d")
+    if stack_cmd == "up" and build and "--build" not in raw_args:
+        compose_args.append("--build")
     if stack_cmd == "logs" and follow and "-f" not in raw_args and "--follow" not in raw_args:
         compose_args.append("-f")
     if stack_cmd == "ps" and show_all and "-a" not in raw_args and "--all" not in raw_args:

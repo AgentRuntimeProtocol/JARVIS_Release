@@ -24,12 +24,18 @@ _INTERNAL_SERVICES = {
 
 
 def run_doctor(config: ResolvedConfig) -> dict[str, Any]:
+    auth_mode = (config.auth_mode.value or "").lower()
+    keycloak = (
+        {"ok": True, "skipped": True, "reason": "ARP_AUTH_MODE=disabled"}
+        if auth_mode == "disabled"
+        else _check_http(_discovery_url(config))
+    )
     report: dict[str, Any] = {
         "compose": _compose_status(config),
         "endpoints": {
             "run_gateway": _check_http(f"{config.gateway_url.value}/v1/health"),
             "run_coordinator": _check_http(f"{config.coordinator_url.value}/v1/health"),
-            "keycloak": _check_http(_discovery_url(config)),
+            "keycloak": keycloak,
         },
         "internal_services": {},
     }
